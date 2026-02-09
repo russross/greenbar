@@ -1,8 +1,11 @@
 # Greenbar slides
 
-A Typst slide template for academic presentations. Authors write headings and
-content; the template handles page chrome, title pages, footers, and PDF
-bookmarks.
+A simple Typst slide template. The page is framed with a green-themed header and
+footer (modeled after the Beamer CambridgeUS template):
+
+![An example title page slide](assembly-1.png)
+
+![An example regular slide](assembly-10.png)
 
 
 ## Getting started
