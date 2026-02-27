@@ -248,6 +248,7 @@
   show heading.where(level: 3): it => []
 
   // Level 4 headings are visible subheadings inside a slide.
+  show heading.where(level: 4): set heading(outlined: false, bookmarked: false)
   show heading.where(level: 4): it => {
     v(0.3em)
     block(

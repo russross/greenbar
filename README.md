@@ -28,7 +28,7 @@ Import the template and apply it with `#show`:
 
 Then write your deck using standard Typst headings:
 
-- `=` sets the current **section** (appears in the header bar and PDF bookmarks)
+- `=` sets the current **section** (appears in the header bar and PDF bookmarks, I generally use one section per lecture)
 - `==` sets the current **topic** (appears in the header bar and PDF bookmarks)
 - `===` starts a **new slide** with the given title
 - `====` creates a styled **subheading** inside a slide body
@@ -38,7 +38,7 @@ Then write your deck using standard Typst headings:
 
 === Introduction to Types
 
-We will use the term #emph[type] to refer to a #emph[static] check.
+We will use the term _type_ to refer to a _static_ check.
 
 == A Standard Model of Types
 
@@ -47,8 +47,7 @@ We will use the term #emph[type] to refer to a #emph[static] check.
 Types are an abstraction of run-time values.
 ```
 
-No explicit page breaks, per-slide labels, or manual header bookkeeping
-required.
+If a slide is too long it will spill onto another slide.
 
 
 ## Configuration
@@ -70,7 +69,7 @@ All parameters to `slides()` are optional except the body. Common options:
 
 Font faces (`text-font`, `heading-font`, `mono-font`, `math-font`) and
 fine-grained size overrides (`heading-size`, `mono-size`, `chrome-size`) are
-also available.
+also available as variables.
 
 
 ## Building
