@@ -1,7 +1,8 @@
 # Greenbar slides
 
 A simple Typst slide template. The page is framed with a green-themed header and
-footer (modeled after the Beamer CambridgeUS template):
+footer (modeled after the Beamer CambridgeUS template) and uses the CMU
+(Computer Modern Unicode) family of fonts.
 
 ![An example title page slide](assembly-1.png)
 
@@ -9,6 +10,10 @@ footer (modeled after the Beamer CambridgeUS template):
 
 
 ## Getting started
+
+Make sure you have the CMU fonts installed. From Debian-based systems:
+
+    sudo apt install fonts-cmu
 
 Import the template and apply it with `#show`:
 
