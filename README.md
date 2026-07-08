@@ -25,6 +25,7 @@ Import the template and apply it with `#show`:
   short-title: [CS 3520],
   subtitle: [Types],
   author: [Dr Russ Ross],
+  short-author: [Dr Russ Ross],
   institute: [Utah Tech University—Department of Computing],
   short-institute: [Computing],
   date: [Fall 2025],
@@ -33,9 +34,9 @@ Import the template and apply it with `#show`:
 
 Then write your deck using standard Typst headings:
 
-- `=` sets the current **section** (appears in the header bar and PDF bookmarks, I generally use one section per lecture)
-- `==` sets the current **topic** (appears in the header bar and PDF bookmarks)
-- `===` starts a **new slide** with the given title
+- `=` sets the current **section** for the running header and PDF bookmarks
+- `==` sets the current **topic** for the running header and PDF bookmarks
+- `===` starts a **new slide** and supplies that slide's title
 - `====` creates a styled **subheading** inside a slide body
 
 ```typ
@@ -52,29 +53,40 @@ We will use the term _type_ to refer to a _static_ check.
 Types are an abstraction of run-time values.
 ```
 
-If a slide is too long it will spill onto another slide.
+The deck always starts with a title page. Slides begin at each `===` heading. If
+content runs long, it naturally continues onto following pages with the same
+slide title and header/footer styling.
 
 
 ## Configuration
 
-All parameters to `slides()` are optional except the body. Common options:
+All parameters to `slides()` are optional except the body:
 
 | Parameter          | Default                    | Description                          |
 |--------------------|----------------------------|--------------------------------------|
 | `title`            | `[Untitled]`               | Title shown on the title slide       |
 | `subtitle`         | `none`                     | Line below the title                 |
-| `short-title`      | same as `title`            | Compact label for the footer         |
+| `short-title`      | `auto`                     | Footer title; defaults to `title`    |
 | `author`           | `none`                     | Author line on the title slide       |
+| `short-author`     | `auto`                     | Footer author; defaults to `author`  |
 | `institute`        | `none`                     | Institute line on the title slide    |
 | `short-institute`  | `none`                     | Short institute for the footer       |
 | `date`             | `none`                     | Date on title slide and footer       |
 | `color`            | `rgb(0, 77, 0)`            | Primary accent color                 |
-| `font-size`        | `8pt`                      | Base body size (others derive from it)|
+| `text-font`        | `"CMU Serif"`              | Main body font                       |
+| `heading-font`     | `"CMU Sans Serif"`         | Header/title/heading font            |
+| `mono-font`        | `"CMU Typewriter Text"`    | Code/raw text font                   |
+| `math-font`        | `"New Computer Modern Math"` | Math font                          |
+| `text-size`        | `9pt`                      | Base body size                       |
+| `mono-scale`       | `auto`                     | Inline code size relative to text    |
+| `block-mono-scale` | `auto`                     | Block code size relative to body text |
 | `aspect-ratio`     | `"16-9"`                   | `"16-9"` or `"4-3"`                 |
 
-Font faces (`text-font`, `heading-font`, `mono-font`, `math-font`) and
-fine-grained size overrides (`heading-size`, `mono-size`, `chrome-size`) are
-also available as variables.
+With the defaults, the footer shows:
+
+- left: `short-author (short-institute)` when both are present, with sensible fallbacks
+- middle: `short-title`
+- right: `date` and `current/total` page numbering
 
 
 ## Building

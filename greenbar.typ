@@ -1,7 +1,7 @@
 /// Slide template for "authored-content-first" decks.
 ///
 /// The design goal is: authors mostly write headings and content, while this
-/// template handles page chrome, title pages, footer metadata, and outline
+/// template handles page bars, title pages, footer metadata, and outline
 /// bookmarks automatically.
 ///
 /// Authoring contract in the source deck:
@@ -23,18 +23,31 @@
   short-institute: none, // Footer short institute. Example: "Computing" in `types.typ`.
   date: none, // Title-slide date and footer-right date.
   color: rgb(0, 77, 0), // Primary accent for bars and heading accents.
-  font-size: 8pt, // Base body size. Other sizes derive from this.
   text-font: "CMU Serif", // Main prose face.
-  heading-font: "CMU Sans Serif", // Face for slide titles/chrome/headings.
+  heading-font: "CMU Sans Serif", // Face for slide titles, bars, and headings.
   mono-font: "CMU Typewriter Text", // Face for code/raw blocks.
   math-font: "New Computer Modern Math", // Face for math equations.
-  heading-size: auto, // Base heading size; `auto` derives from body size.
-  mono-size: auto, // Base code size; `auto` derives from body size.
-  chrome-size: auto, // Header/footer text size; `auto` derives from body size.
+  text-size: 9pt, // Base body size. Other sizes derive from this.
+  mono-scale: auto, // Inline code size relative to surrounding text size.
+  block-mono-scale: auto, // Block code size relative to the base body size.
   aspect-ratio: "16-9", // "16-9" or "4-3" page geometry.
   doc, // The authored deck body (everything after `#show: slides.with(...)`).
 ) = {
-  // Normalize short forms first so downstream rendering has one resolved value.
+  // Author-facing API:
+  // parameters to `slides(...)` are the intended deck-level customization
+  // surface; literal sizes and spacing in the helpers below are template
+  // layout policy.
+  //
+  // Layout guide for readers:
+  // - title page typography and spacing: `title-page(...)`
+  // - regular slide title band: `slide-title-bar(...)`
+  // - regular slide body inset and gap: `slide(...)`
+  // - header/footer bar sizing and padding: `header-cell(...)`,
+  //   `footer-cell(...)`, and `set page(...)`
+  // - footer content layout: the footer grid inside `set page(...)`
+  //
+  // Resolve author-facing `auto` options first so downstream rendering has one
+  // value per setting.
   // Practical example from `types.typ`:
   // - `title` is "Programming Languages" for the title page.
   // - `short-title` is "CS 3520" for compact footer display.
@@ -43,78 +56,53 @@
   let short-title = if short-title == auto { title } else { short-title }
   let short-author = if short-author == auto { author } else { short-author }
   let short-institute = if short-institute == auto { institute } else { short-institute }
+  let mono-scale = if mono-scale == auto { 1.0 } else { mono-scale }
+  let block-mono-scale = if block-mono-scale == auto { 0.8 } else { block-mono-scale }
 
-  // Geometry knobs used throughout the template.
-  // These are the first values to tweak when the deck feels cramped/airy.
-  let header-height = 1.4em // Running header bar height.
-  let footer-height = 1.1em // Running footer bar height.
-  let body-padding-x = 1em // Left/right inset for slide title band and body.
-  let chrome-padding = 0.5em // Inner horizontal padding inside header/footer cells.
-  let page-label-right-pad = 0.5em // Breathing room at the far-right footer edge.
-  let frame-title-height = 1.9em // Height of each slide's title band.
-  let body-top-gap = 0.3em // Gap between title band and slide body.
+  // Page canvas selected from the deck's aspect ratio.
   let (page-width, page-height) = if aspect-ratio == "4-3" {
     (12cm, 9cm)
   } else {
     (16cm, 9cm)
   }
 
-  // Typography scale: one base size, then derived "roles".
-  // Keeping these derived values centralized avoids hunting through multiple
-  // style calls when you change the visual scale of the deck.
-  let text-size = font-size
-  let resolved-heading-size = if heading-size == auto { text-size * 1.1 } else { heading-size }
-  let resolved-mono-size = if mono-size == auto { text-size * 0.8 } else { mono-size }
-  let resolved-chrome-size = if chrome-size == auto { text-size * 0.65 } else { chrome-size }
+  // Shared typography used in the regular slide title band.
+  // Slide-title text and inline raw inside that title band share this size.
+  let title-size = text-size * 1.3
 
-  let title-size = resolved-heading-size * 1.31
-
-  // Title-slide scale has its own hierarchy because that page is a billboard.
-  let title-slide-title-size = resolved-heading-size * 2.0
-  let title-slide-subtitle-size = resolved-heading-size * 1.44
-  let title-slide-author-size = resolved-heading-size * 0.91
-  let title-slide-institute-size = resolved-heading-size * 0.73
-  let title-slide-date-size = resolved-heading-size * 0.91
-  let detail-heading-size = resolved-heading-size
-
-  // Intra-group spacing on the title slide.
-  // These control spacing *within* groups; inter-group spacing is controlled by
-  // `v(...fr)` spacers inside `title-slide`.
-  let title-subtitle-spacing = 1.0em
-  let title-meta-spacing = 0.5em
-
-  // Neutral tints used by header/footer/title bands.
+  // Shared colors used by the title band and header/footer bars.
   let title-color = color
   let title-bg = white.darken(10%)
   let header-right-bg = white.darken(15%)
   let footer-mid-bg = white.darken(5%)
   let footer-right-bg = white.darken(15%)
 
-  // Reusable chrome helper: apply a consistent font role to header/footer text.
-  let chrome-text(fill, body) = {
-    set text(font: heading-font, size: resolved-chrome-size, fill: fill)
+  // Header and footer text styling used in the bars on each page.
+  let bar-text(fill, body) = {
+    set text(font: heading-font, size: text-size * 0.6, fill: fill)
     body
   }
 
-  // Header/footer cells all share the same structural pattern:
-  // fixed height, background fill, inner padding, aligned text.
+  // Header and footer cells share the same block structure: fixed height,
+  // background fill, horizontal inset, and aligned text.
   let header-cell(bg, align-to, fill, body) = block(
     width: 100%,
-    height: header-height,
+    height: 1.2em,
     fill: bg,
-    inset: (x: chrome-padding),
-    align(align-to + horizon, chrome-text(fill, body)),
+    inset: (x: 0.5em),
+    align(align-to + horizon, bar-text(fill, body)),
   )
 
-  let footer-cell(bg, align-to, fill, body, inset: (x: chrome-padding)) = block(
+  let footer-cell(bg, align-to, fill, body, inset: (x: 0.5em)) = block(
     width: 100%,
-    height: footer-height,
+    height: 1.2em,
     fill: bg,
     inset: inset,
-    align(align-to + horizon, chrome-text(fill, body)),
+    align(align-to + horizon, bar-text(fill, body)),
   )
 
-  // Running header bar: left cell shows section, right cell shows topic.
+  // Header bar visible at the top of each page. The left cell shows the
+  // section and the right cell shows the topic.
   let header-bar(section-name: [], topic-name: []) = block(
     width: 100%,
     grid(
@@ -125,20 +113,76 @@
     ),
   )
 
-  // Per-slide title strip directly under the running header.
-  // This is intentionally separate from body content so changing body spacing
-  // does not affect slide-title rhythm.
-  let slide-title-band(slide-title) = block(
+  // Title page layout used on the first page of the deck.
+  // The page is arranged in three vertical groups: title/subtitle,
+  // author/institute, and date.
+  let title-page(header-left: [], header-right: []) = {
+    set page(header: header-bar(section-name: header-left, topic-name: header-right))
+    let group-title = stack(
+      dir: ttb,
+      spacing: 1.0em,
+      text(font: heading-font, size: text-size * 2.0, weight: "medium", fill: title-color)[#title],
+      if subtitle != none {
+        text(font: heading-font, size: text-size * 1.44, fill: title-color)[#subtitle]
+      } else {
+        []
+      },
+    )
+    let group-author = stack(
+      dir: ttb,
+      spacing: 0.5em,
+      if author != none {
+        text(font: heading-font, size: text-size * 0.91, weight: "medium")[#author]
+      } else {
+        []
+      },
+      if institute != none {
+        text(font: heading-font, size: text-size * 0.73)[#institute]
+      } else {
+        []
+      },
+    )
+    let group-date = if date != none {
+      text(font: heading-font, size: text-size * 0.91)[#date]
+    } else {
+      []
+    }
+    block(
+      width: 100%,
+      height: 100%,
+      [
+        #set align(center)
+        #stack(
+          dir: ttb,
+          spacing: 0pt,
+          v(1fr),
+          block(width: 100%, group-title),
+          v(0.5fr),
+          block(width: 100%, group-author),
+          v(0.5fr),
+          block(width: 100%, group-date),
+          v(1fr),
+        )
+      ],
+    )
+  }
+
+  // Regular slide title band directly below the header.
+  // This band is separate from the slide body so the title rhythm stays stable
+  // even when body layout changes.
+  let slide-title-bar(slide-title) = block(
     width: 100%,
-    height: frame-title-height,
+    height: 1.6em,
     fill: title-bg,
-    inset: (x: body-padding-x),
+    inset: (x: 1.0em),
     align(left + horizon, [
       #set text(font: heading-font, size: title-size, weight: "medium", fill: title-color)
+      #show raw: it => text(font: mono-font, size: mono-scale * 1em, it)
       #slide-title
     ]),
   )
 
+  // Regular slide layout: header, title band, gap, then body.
   let slide(
     slide-title,
     slide-body,
@@ -163,78 +207,26 @@
     if outline-topic != none {
       heading(level: 2, outlined: true, bookmarked: true)[#outline-topic]
     }
-    slide-title-band(slide-title)
-    v(body-top-gap)
+    slide-title-bar(slide-title)
+    v(0.5em)
     block(
       width: 100%,
-      inset: (x: body-padding-x),
+      inset: (x: 1.0em),
       slide-body,
     )
   }
 
-  let title-slide(header-left: [], header-right: []) = {
-    // Title page uses three logical groups:
-    // 1) title/subtitle, 2) author/institute, 3) date.
-    // Vertical `fr` spacers between groups control their relative separation.
-    set page(header: header-bar(section-name: header-left, topic-name: header-right))
-    let group-title = stack(
-      dir: ttb,
-      spacing: title-subtitle-spacing,
-      text(font: heading-font, size: title-slide-title-size, weight: "medium", fill: title-color)[#title],
-      if subtitle != none {
-        text(font: heading-font, size: title-slide-subtitle-size, fill: title-color)[#subtitle]
-      } else {
-        []
-      },
-    )
-    let group-author = stack(
-      dir: ttb,
-      spacing: title-meta-spacing,
-      if author != none {
-        text(font: heading-font, size: title-slide-author-size, weight: "medium")[#author]
-      } else {
-        []
-      },
-      if institute != none {
-        text(font: heading-font, size: title-slide-institute-size)[#institute]
-      } else {
-        []
-      },
-    )
-    let group-date = if date != none {
-      text(font: heading-font, size: title-slide-date-size)[#date]
-    } else {
-      []
-    }
-    block(
-      width: 100%,
-      height: 100%,
-      [
-        #set align(center)
-        #stack(
-          dir: ttb,
-          spacing: 0pt,
-          v(1fr),
-          block(width: 100%, group-title),
-          v(0.5fr),
-          block(width: 100%, group-author),
-          v(0.5fr),
-          block(width: 100%, group-date),
-          v(1fr),
-        )
-      ],
-    )
-  }
-
-  // Global text defaults for the deck body.
-  // - Main text uses the configured text face.
-  // - Equation math uses the configured math face.
-  // - Raw/code blocks use the configured monospaced role.
+  // Global typography and heading rules applied to authored slide content.
+  // - Main text uses the configured text face and base size.
+  // - Equation math uses the configured math face at the base size.
+  // - Inline raw/code scales relative to the surrounding text via `mono-scale`.
+  // - Block raw/code scales from the base body size via `block-mono-scale`.
   set text(size: text-size, font: text-font, style: "normal")
-  show math.equation: set text(font: math-font)
-  show raw: set text(font: mono-font, size: resolved-mono-size)
-  show raw.where(block: true): it => block(inset: (left: 1em), it)
-  set par(leading: 0.6em)
+  show math.equation: set text(font: math-font, size: text-size)
+  show raw.where(block: false): set text(font: mono-font, size: mono-scale * 1em)
+  show raw.where(block: true): set text(font: mono-font, size: text-size * block-mono-scale)
+  show raw.where(block: true): it => block(inset: (left: 1.6em), it)
+  set par(leading: 0.5em)
 
   // Heading behavior by level.
   // Levels 1-2 carry structure state and bookmarks; they are hidden visually.
@@ -254,19 +246,16 @@
     block(
       width: 100%,
       [
-        #set text(font: heading-font, size: detail-heading-size, weight: "bold", fill: title-color)
+        #set text(font: heading-font, size: text-size, weight: "bold", fill: title-color)
         #it.body
       ],
     )
     v(0.2em)
   }
 
-  // Transform linear document content into explicit slide pages.
-  //
-  // Why this parser exists:
-  // Authoring stays simple (`=`, `==`, `===`), while runtime keeps enough state
-  // to render running headers and emit PDF bookmarks at section/topic changes.
-  let render-slides(body) = {
+  // Document parser: transform the authored heading stream into explicit slide
+  // pages while tracking section/topic state for headers and PDF bookmarks.
+  let build-slide-pages(body) = {
     let rendered = ()
     let section-state = []
     let topic-state = []
@@ -355,19 +344,19 @@
 
     {
       // The deck always opens with a first-class title page.
-      title-slide()
+      title-page()
       for part in rendered {
         part
       }
     }
   }
 
-  // Page frame: full-width header/footer "chrome", explicit body insets.
-  // Footer is context-aware so it can compute "current / total" page numbers.
+  // Page frame shared by the title page and regular slides.
+  // The footer computes "current / total" page numbers with Typst context.
   set page(
     width: page-width,
     height: page-height,
-    margin: (top: header-height, bottom: footer-height, x: 0pt),
+    margin: (top: 1.2em, bottom: 1.2em, x: 0pt),
     header-ascent: 0%,
     footer-descent: 0%,
     header: header-bar(),
@@ -423,7 +412,7 @@
                 align(right + horizon, [#page-num/#total-pages]),
               ),
             ),
-            inset: (left: chrome-padding, right: page-label-right-pad),
+            inset: (left: 0.5em, right: 0.5em),
           ),
         ),
       )
@@ -431,5 +420,5 @@
   )
 
   // Final render: title page plus parsed slide content.
-  render-slides(doc)
+  build-slide-pages(doc)
 }
