@@ -53,9 +53,9 @@ We will use the term _type_ to refer to a _static_ check.
 Types are an abstraction of run-time values.
 ```
 
-The deck always starts with a title page. Slides begin at each `===` heading. If
-content runs long, it naturally continues onto following pages with the same
-slide title and header/footer styling.
+The deck always starts with a title page. Slides begin at each `===` heading. By
+default, slides must fit on one page; compilation reports any slide that spills
+onto another page.
 
 
 ## Configuration
